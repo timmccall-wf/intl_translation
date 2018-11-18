@@ -14,14 +14,14 @@ import 'package:intl_translation/extract_messages.dart';
 /// Return the modified source code. If there are errors parsing, list
 /// [sourceName] in the error message.
 String rewriteMessages(String source, String sourceName,
-    {useStringSubstitution: false}) {
-  var messages = findMessages(source, sourceName);
+    {forceRewrite: false, useStringSubstitution: false}) {
+  var messages = findMessages(source, sourceName, null, forceRewrite);
   messages.sort((a, b) => a.sourcePosition.compareTo(b.sourcePosition));
 
   var start = 0;
   var newSource = new StringBuffer();
   for (var message in messages) {
-    if (message.arguments.isNotEmpty) {
+    if (forceRewrite || message.arguments.isNotEmpty) {
       newSource.write(source.substring(start, message.sourcePosition));
       if (useStringSubstitution) {
         rewriteWithStringSubstitution(newSource, source, start, message);
@@ -71,7 +71,7 @@ final RegExp argsCheck = new RegExp('[\\n,]\\s+args\:');
 ///
 /// Report errors as coming from [sourceName]
 List findMessages(String source, String sourceName,
-    [MessageExtraction extraction]) {
+    [MessageExtraction extraction, forceRewrite = false]) {
   extraction = extraction ?? new MessageExtraction();
   try {
     extraction.root = parseCompilationUnit(source, name: sourceName);
@@ -84,6 +84,7 @@ List findMessages(String source, String sourceName,
   extraction.origin = sourceName;
   var visitor = new MessageFindingVisitor(extraction);
   visitor.generateNameAndArgs = true;
+  visitor.forceRewrite = forceRewrite;
   extraction.root.accept(visitor);
   return visitor.messages.values.toList();
 }

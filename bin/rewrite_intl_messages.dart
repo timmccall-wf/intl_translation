@@ -22,6 +22,7 @@ String outputFileOption = 'transformed_output.dart';
 
 bool useStringSubstitution = true;
 bool replace = false;
+bool forceRewrite = false;
 
 main(List<String> args) {
   var parser = new ArgParser();
@@ -33,6 +34,11 @@ main(List<String> args) {
       defaultsTo: false,
       callback: (x) => replace = x,
       help: 'Overwrite the input file; ignore --output option.');
+  parser.addFlag('forceRewrite',
+      defaultsTo: false,
+      callback: (x) => forceRewrite = x,
+      help:
+          'Force rewriting of Intl.message calls without a `name` and `args` parameter.');
   parser.addFlag('useStringSubstitution',
       defaultsTo: true,
       callback: (x) => useStringSubstitution = x,
@@ -61,6 +67,7 @@ main(List<String> args) {
     var file = new File(inputFile);
     var content = file.readAsStringSync();
     var newSource = rewriteMessages(content, '$file',
+        forceRewrite: forceRewrite,
         useStringSubstitution: useStringSubstitution);
     if (content == newSource) {
       print('No changes to $outputFile');
