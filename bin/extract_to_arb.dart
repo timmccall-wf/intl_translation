@@ -8,33 +8,33 @@
 /// https://code.google.com/p/arb/wiki/ApplicationResourceBundleSpecification
 library extract_to_arb;
 
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:args/args.dart';
-import 'package:path/path.dart' as path;
 
-import 'package:intl_translation/extract_messages.dart';
-import 'package:intl_translation/src/intl_message.dart';
+import 'package:intl_translation/intl_translation.dart';
 
 main(List<String> args) {
-  var targetDir;
+  var outputDir;
   var outputFilename;
+  bool suppressWarnings;
+  bool warningsAreErrors;
+  bool embeddedPlurals;
   bool transformer;
-  var parser = new ArgParser();
-  var extraction = new MessageExtraction();
   String locale;
+
+  var parser = new ArgParser();
   parser.addFlag("suppress-warnings",
       defaultsTo: false,
-      callback: (x) => extraction.suppressWarnings = x,
+      callback: (x) => suppressWarnings = x,
       help: 'Suppress printing of warnings.');
   parser.addFlag("warnings-are-errors",
       defaultsTo: false,
-      callback: (x) => extraction.warningsAreErrors = x,
+      callback: (x) => warningsAreErrors = x,
       help: 'Treat all warnings as errors, stop processing ');
   parser.addFlag("embedded-plurals",
       defaultsTo: true,
-      callback: (x) => extraction.allowEmbeddedPluralsAndGenders = x,
+      callback: (x) => embeddedPlurals = x,
       help: 'Allow plurals and genders to be embedded as part of a larger '
           'string, otherwise they must be at the top level.');
   parser.addFlag("transformer",
@@ -42,14 +42,13 @@ main(List<String> args) {
       callback: (x) => transformer = x,
       help: "Assume that the transformer is in use, so name and args "
           "don't need to be specified for messages.");
-
   parser.addOption("locale",
       defaultsTo: null,
       callback: (value) => locale = value,
       help: 'Specify the locale set inside the arb file.');
   parser.addOption("output-dir",
       defaultsTo: '.',
-      callback: (value) => targetDir = value,
+      callback: (value) => outputDir = value,
       help: 'Specify the output directory.');
   parser.addOption("output-file",
       defaultsTo: 'intl_messages.arb',
@@ -62,90 +61,13 @@ main(List<String> args) {
     print(parser.usage);
     exit(0);
   }
-  var allMessages = {};
-  if (locale != null) {
-    allMessages["@@locale"] = locale;
-  }
-  allMessages["@@last_modified"] = new DateTime.now().toIso8601String();
-  for (var arg in args.where((x) => x.contains(".dart"))) {
-    var messages = extraction.parseFile(new File(arg), transformer);
-    messages.forEach((k, v) => allMessages.addAll(toARB(v)));
-  }
-  var file = new File(path.join(targetDir, outputFilename));
-  var encoder = new JsonEncoder.withIndent("  ");
-  file.writeAsStringSync(encoder.convert(allMessages));
-  if (extraction.hasWarnings && extraction.warningsAreErrors) {
-    exit(1);
-  }
-}
 
-/// This is a placeholder for transforming a parameter substitution from
-/// the translation file format into a Dart interpolation. In our case we
-/// store it to the file in Dart interpolation syntax, so the transformation
-/// is trivial.
-String leaveTheInterpolationsInDartForm(MainMessage msg, chunk) {
-  if (chunk is String) return chunk;
-  if (chunk is int) return "\$${msg.arguments[chunk]}";
-  return chunk.toCode();
-}
-
-/// Convert the [MainMessage] to a trivial JSON format.
-Map toARB(MainMessage message) {
-  if (message.messagePieces.isEmpty) return null;
-  var out = {};
-  out[message.name] = icuForm(message);
-  out["@${message.name}"] = arbMetadata(message);
-  return out;
-}
-
-Map arbMetadata(MainMessage message) {
-  var out = {};
-  var desc = message.description;
-  if (desc != null) {
-    out["description"] = desc;
-  }
-  out["type"] = "text";
-  var placeholders = {};
-  for (var arg in message.arguments) {
-    addArgumentFor(message, arg, placeholders);
-  }
-  out["placeholders"] = placeholders;
-  return out;
-}
-
-void addArgumentFor(MainMessage message, String arg, Map result) {
-  var extraInfo = {};
-  if (message.examples != null && message.examples[arg] != null) {
-    extraInfo["example"] = message.examples[arg];
-  }
-  result[arg] = extraInfo;
-}
-
-/// Return a version of the message string with with ICU parameters "{variable}"
-/// rather than Dart interpolations "$variable".
-String icuForm(MainMessage message) =>
-    message.expanded(turnInterpolationIntoICUForm);
-
-String turnInterpolationIntoICUForm(Message message, chunk,
-    {bool shouldEscapeICU: false}) {
-  if (chunk is String) {
-    return shouldEscapeICU ? escape(chunk) : chunk;
-  }
-  if (chunk is int && chunk >= 0 && chunk < message.arguments.length) {
-    return "{${message.arguments[chunk]}}";
-  }
-  if (chunk is SubMessage) {
-    return chunk.expanded((message, chunk) =>
-        turnInterpolationIntoICUForm(message, chunk, shouldEscapeICU: true));
-  }
-  if (chunk is Message) {
-    return chunk.expanded((message, chunk) => turnInterpolationIntoICUForm(
-        message, chunk,
-        shouldEscapeICU: shouldEscapeICU));
-  }
-  throw new FormatException("Illegal interpolation: $chunk");
-}
-
-String escape(String s) {
-  return s.replaceAll("'", "''").replaceAll("{", "'{'").replaceAll("}", "'}'");
+  extract_to_arb(args,
+      outputDir: outputDir,
+      outputFilename: outputFilename,
+      suppressWarnings: suppressWarnings,
+      warningsAreErrors: warningsAreErrors,
+      embeddedPlurals: embeddedPlurals,
+      transformer: transformer,
+      locale: locale);
 }
