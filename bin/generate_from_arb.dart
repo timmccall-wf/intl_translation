@@ -36,7 +36,7 @@ main(List<String> args) {
   var outputDir;
   bool useJson;
   bool suppressWarnings;
-  bool generatedFilePrefix;
+  String generatedFilePrefix;
   bool useDeferredLoading;
   String codegenMode;
   bool transformer;
@@ -85,7 +85,7 @@ main(List<String> args) {
     exit(0);
   }
 
-  generate_from_arb(dartFiles, jsonFiles,
+  generateFromArb(dartFiles, jsonFiles,
       outputDir: outputDir,
       useJson: useJson,
       suppressWarnings: suppressWarnings,

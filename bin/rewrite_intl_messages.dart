@@ -15,8 +15,7 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 
-import 'package:intl_translation/src/message_rewriter.dart';
-import 'package:dart_style/dart_style.dart';
+import 'package:intl_translation/intl_translation.dart';
 
 String outputFileOption = 'transformed_output.dart';
 
@@ -61,20 +60,11 @@ main(List<String> args) {
     exit(0);
   }
 
-  var formatter = new DartFormatter();
-  for (var inputFile in rest) {
-    var outputFile = replace ? inputFile : outputFileOption;
-    var file = new File(inputFile);
-    var content = file.readAsStringSync();
-    var newSource = rewriteMessages(content, '$file',
-        forceRewrite: forceRewrite,
-        useStringSubstitution: useStringSubstitution);
-    if (content == newSource) {
-      print('No changes to $outputFile');
-    } else {
-      print('Writing new source to $outputFile');
-      var out = new File(outputFile);
-      out.writeAsStringSync(formatter.format(newSource));
-    }
-  }
+  rewriteIntlMessages(
+    rest,
+    outputFileOption: outputFileOption,
+    replace: replace,
+    forceRewrite: forceRewrite,
+    useStringSubstitution: useStringSubstitution,
+  );
 }

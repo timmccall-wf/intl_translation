@@ -62,7 +62,7 @@ main(List<String> args) {
     exit(0);
   }
 
-  extract_to_arb(args,
+  extractToArb(args,
       outputDir: outputDir,
       outputFilename: outputFilename,
       suppressWarnings: suppressWarnings,

@@ -16,7 +16,7 @@ import 'package:path/path.dart' as path;
 import 'package:intl_translation/extract_messages.dart';
 import 'package:intl_translation/src/intl_message.dart';
 
-int extract_to_arb(List<String> filePaths,
+int extractToArb(List<String> filePaths,
     {bool suppressWarnings: false,
     bool warningsAreErrors: false,
     bool embeddedPlurals: true,

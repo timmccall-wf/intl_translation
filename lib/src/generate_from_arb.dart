@@ -34,15 +34,15 @@ Map<String, List<MainMessage>> messages;
 
 const jsonDecoder = const JsonCodec();
 
-generate_from_arb(
+generateFromArb(
     List<String> messageFilePaths, List<String> translationFilePaths,
-    {useJson: false,
-    suppressWarnings: false,
-    outputDir: '.',
-    generatedFilePrefix: '',
-    useDeferredLoading: true,
-    codegenMode: 'debug',
-    transformer: false}) {
+    {bool useJson: false,
+    bool suppressWarnings: false,
+    String outputDir: '.',
+    String generatedFilePrefix: '',
+    bool useDeferredLoading: true,
+    String codegenMode: 'debug',
+    bool transformer: false}) {
   var generation =
       (useJson ? new JsonMessageGeneration() : new MessageGeneration())
         ..generatedFilePrefix = generatedFilePrefix
